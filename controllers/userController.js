@@ -61,6 +61,20 @@ const findUser = async (email) => {
 }
 
 
+const findUserByUsername = async (username) => {
+    try{
+        let user = await User.findOne({username});
+        if(user == null){
+            return {status: false, result: {message: "invalid username"}}
+        }
+        return {status: true, result: {message: user}}
+    }catch(e){
+        return {status: false, result: {message: e.message}};
+    }
+}
 
 
-module.exports = {signUp,loginUser,findUser}
+
+
+
+module.exports = {signUp,loginUser,findUser,findUserByUsername}

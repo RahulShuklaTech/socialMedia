@@ -4,7 +4,34 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const RefreshTokens = require("../controllers/refreshTokenController");
 
-const {signUp,loginUser,findUser} = require("../controllers/userController");
+const {signUp,loginUser,findUser, findUserByUsername} = require("../controllers/userController");
+
+const validateRequest = (req,res,next) => {
+
+    let authHeader = req.headers['authorization'];
+    if(!authHeader){
+        res.status(403).json({message: 'No header in request'})
+        return;
+    }
+    let token = authHeader.split(" ")[1];
+    console.log(token)
+    if(!token){
+        res.status(403).json({message: 'No token in request'})
+        return;
+    }
+    try {
+       let decoded = jwt.verify(token,process.env.TOKEN_SECRET)
+        
+        req.userEmail = decoded.email; 
+        console.log("decoded",req.userEmail)
+        next();
+    } catch (e){
+        console.log("happend here")
+        res.status(403).json({message: "Wrong token"+e.message})
+    }
+}
+
+
 
 
 router.post("/signup",async (req,res) => {
@@ -73,5 +100,41 @@ router.get("/signout", async (req,res) => {
     }
 
 })
+
+
+router.post("/follow/:username",validateRequest, async (req,res) => {
+    let {username}= req.params;
+    let originalUser = await findUser(req.userEmail)
+    let follower = await findUserByUsername(username);
+    // console.log("follower",follower)
+    console.log("user",originalUser,req.userEmail)
+    if(originalUser.status && follower.status){
+        await originalUser.result.message.updateOne({$push: { followers: follower.result.message._id }})
+        res.status(200).json({"message": "you are now following "+username})
+        return;
+    }
+    res.status(400).json({"message": "something went wrong"});
+    return;
+})
+
+router.post("/unfollow/:username",validateRequest, async (req,res) => {
+    let {username}= req.params;
+    let originalUser = await findUser(req.userEmail)
+    let follower = await findUserByUsername(username);
+
+    let checkFollowing = originalUser.result.message.followers.includes(follower._id);
+
+    if(originalUser.status && follower.status && checkFollowing){
+        await originalUser.result.message.update({$pull: { followers: follower.result.message._id }})
+        res.status(200).json({"message": "you are not following "+username})
+        return;
+    }
+    res.status(400).json({"message": "something went wrong"});
+    return;
+})
+
+
+
+
 
 module.exports = router

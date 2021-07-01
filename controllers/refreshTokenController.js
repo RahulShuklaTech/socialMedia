@@ -1,4 +1,4 @@
-const RefreshTokens = require("../models/refreshTokens");
+const RefreshTokens = require("../models/refreshTokenModel");
 
 
 
