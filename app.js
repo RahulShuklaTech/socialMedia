@@ -19,9 +19,10 @@ app.use( cors({origin: "*"}));
 app.use(express.json());
 
 const userRouter = require("./Routes/userRouter");
-
+const postRouter = require("./Routes/postRouter");
 
 app.use("/users/",userRouter);
+app.use("/posts/",postRouter);
 
 
 
